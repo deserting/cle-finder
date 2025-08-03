@@ -1,0 +1,21 @@
+<!doctype html><html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Clé-Finder</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body style="font-family:sans-serif;padding:1rem">
+  <input id="manual" placeholder="Tape l’adresse…" style="width:70%">
+  <button id="scan">📷 Scanner</button>
+  <h1 id="result"></h1>
+
+  <script src="https://unpkg.com/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body></html>

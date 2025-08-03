@@ -124,33 +124,42 @@ function startQuagga() {
   isScanning = true;
   document.getElementById('scan').textContent = '⏹️ Arrêter';
   CAMERA_CONTAINER.style.display = 'block';
-  showResult('📷 Pointez vers un code-barres...', '');
+  showResult('📷 Pointez vers un code-barres Code 128...', '');
   
   Quagga.init({
     inputStream: {
       type: 'LiveStream',
       target: CAMERA_VIEW,
       constraints: {
-        width: { min: 320, ideal: 640, max: 800 },
-        height: { min: 240, ideal: 480, max: 600 },
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 },
         facingMode: 'environment'
       }
     },
     decoder: {
-      readers: [
-        'code_128_reader',
-        'ean_reader',
-        'ean_8_reader',
-        'code_39_reader',
-        'code_39_vin_reader',
-        'codabar_reader'
-      ]
+      readers: ['code_128_reader'], // Focus uniquement sur Code 128
+      debug: {
+        showCanvas: false,
+        showPatches: false,
+        showFoundPatches: false,
+        showSkeleton: false,
+        showLabels: false,
+        showPatchLabels: false,
+        showRemainingPatchLabels: false,
+        boxFromPatches: {
+          showTransformed: false,
+          showTransformedBox: false,
+          showBB: false
+        }
+      }
     },
     locate: true,
     locator: {
-      patchSize: 'medium',
-      halfSample: true
-    }
+      patchSize: 'large', // Patch plus large pour Code 128
+      halfSample: false   // Pas de sous-échantillonnage
+    },
+    numOfWorkers: 2,
+    frequency: 10
   }, (err) => {
     if (err) {
       console.error('Erreur Quagga init:', err);
@@ -159,22 +168,53 @@ function startQuagga() {
       return;
     }
     
-    console.log('Quagga initialisé avec succès');
+    console.log('Quagga initialisé avec succès pour Code 128');
     Quagga.start();
   });
   
-  // Écouter les détections
+  // Debug : afficher toutes les tentatives
+  Quagga.onProcessed((result) => {
+    const drawingCtx = Quagga.canvas.ctx.overlay;
+    const drawingCanvas = Quagga.canvas.dom.overlay;
+
+    if (result) {
+      // Dessiner les zones détectées
+      if (result.boxes) {
+        drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+        result.boxes.filter(box => box !== result.box).forEach(box => {
+          Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
+        });
+      }
+
+      if (result.box) {
+        Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
+      }
+
+      if (result.codeResult && result.codeResult.code) {
+        Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
+      }
+    }
+  });
+  
+  // Écouter les détections avec validation
   Quagga.onDetected((result) => {
     const code = result.codeResult.code;
-    console.log('Code détecté:', code);
+    const format = result.codeResult.format;
     
-    // Vibration si supportée
-    if (navigator.vibrate) {
-      navigator.vibrate(200);
+    console.log('Code détecté:', code, 'Format:', format);
+    
+    // Validation : doit être Code 128 et correspondre au pattern attendu
+    if (format === 'code_128' && code && code.length >= 3) {
+      // Vibration si supportée
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+      
+      stopScanning();
+      lookup(code);
+    } else {
+      console.log('Code ignoré - format:', format, 'longueur:', code?.length);
     }
-    
-    stopScanning();
-    lookup(code);
   });
 }
 
@@ -197,7 +237,7 @@ function stopScanning() {
 /* Bouton arrêter scan */
 document.getElementById('stop-scan').onclick = stopScanning;
 
-/* Envoi vers Google Forms */
+/* Envoi vers Google Forms avec debug */
 function send() {
   if (!navigator.onLine) {
     console.log('Hors ligne, envoi différé');
@@ -208,25 +248,65 @@ function send() {
   if (!q.length) return;
   
   const { addr, key } = q[0];
-  const body = new URLSearchParams({
-    [A]: addr,
-    [K]: key
-  });
   
+  console.log('🚀 Tentative d\'envoi:', { addr, key });
+  
+  const formData = new FormData();
+  formData.append(A, addr);
+  formData.append(K, key);
+  
+  // Alternative avec URLSearchParams pour debug
+  const params = new URLSearchParams();
+  params.append(A, addr);
+  params.append(K, key);
+  
+  console.log('📤 Données FormData:', formData);
+  console.log('📤 URL params:', params.toString());
+  console.log('📤 URL complète:', FORM_URL);
+  
+  // Essayer avec FormData d'abord
   fetch(FORM_URL, {
     method: 'POST',
-    body,
+    body: formData,
     mode: 'no-cors'
   })
-  .then(() => {
-    console.log('Données envoyées:', addr, key);
+  .then((response) => {
+    console.log('✅ Réponse reçue:', response.status, response.type);
+    console.log('📨 Données envoyées avec succès:', addr, '→', key);
+    
+    // Retirer de la queue
     q.shift();
     localStorage.setItem('q', JSON.stringify(q));
-    if (q.length > 0) send(); // Envoyer le suivant
+    
+    // Envoyer le suivant s'il y en a
+    if (q.length > 0) {
+      setTimeout(send, 1000); // Délai d'1 seconde entre envois
+    }
   })
   .catch((error) => {
-    console.warn('Erreur envoi:', error);
-    // Réessaiera quand la connexion reviendra
+    console.error('❌ Erreur envoi:', error);
+    
+    // Essayer avec URLSearchParams en cas d'échec
+    console.log('🔄 Nouvelle tentative avec URLSearchParams...');
+    
+    fetch(FORM_URL, {
+      method: 'POST',
+      body: params,
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(() => {
+      console.log('✅ Succès avec URLSearchParams');
+      q.shift();
+      localStorage.setItem('q', JSON.stringify(q));
+      if (q.length > 0) setTimeout(send, 1000);
+    })
+    .catch((err) => {
+      console.error('❌ Échec total:', err);
+      // Réessaiera plus tard quand la connexion reviendra
+    });
   });
 }
 
@@ -240,3 +320,27 @@ window.addEventListener('online', () => {
 console.log('App initialisée');
 console.log('Support getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
 console.log('Support ServiceWorker:', 'serviceWorker' in navigator);
+
+// FONCTION DE TEST - Ajoutez un bouton pour tester l'envoi
+function testSend() {
+  console.log('🧪 Test envoi Google Forms...');
+  const testData = new URLSearchParams({
+    [A]: 'TEST123',
+    [K]: 'CLE456'
+  });
+  
+  fetch(FORM_URL, {
+    method: 'POST',
+    body: testData,
+    mode: 'no-cors'
+  })
+  .then(() => console.log('✅ Test envoi réussi'))
+  .catch(err => console.error('❌ Test envoi échoué:', err));
+}
+
+// Bouton de test (temporaire)
+const testBtn = document.createElement('button');
+testBtn.textContent = '🧪 Test Forms';
+testBtn.onclick = testSend;
+testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:0.5rem;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;';
+document.body.appendChild(testBtn);

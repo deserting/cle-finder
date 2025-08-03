@@ -1,298 +1,186 @@
-/* URL de VOTRE Google Apps Script */
-const SCRIPT_URL = 'https://script.google.com/a/macros/auchan.fr/s/AKfycbywcvs3EBokeLltMb7m-47nJve7qxcf8On6KrC6ZojBK4__32-13BCNl-bvNvwyqs07/exec';
+/******************************************************
+ *  Clé-Finder  –  app.js (Firebase / Firestore)
+ *  • Lookup local dans db.json
+ *  • Ajout / incrément d’une entrée Firestore :
+ *      collection "adresses"  (doc-ID = adresse scannée)
+ *      { key, count, firstScanned, lastScanned }
+ *  • Liste “À réimprimer” temps réel, suppression par 🗑️
+ ******************************************************/
 
-/* Base de données locale */
+/* ---------- 1. CHARGER LA BASE LOCALE db.json ---------- */
+
 let DB = {};
 
-// Chargement de la base avec gestion d'erreur
 fetch('./db.json')
   .then(r => r.json())
   .then(j => {
     DB = j;
-    console.log('Base de données chargée:', Object.keys(DB).length, 'entrées');
+    console.log('✅ db.json chargée :', Object.keys(DB).length, 'adresses');
   })
   .catch(err => {
-    console.error('Erreur chargement DB:', err);
-    showResult('❌ Erreur de chargement de la base', 'error');
+    console.error('❌ Erreur chargement DB :', err);
+    showResult('Erreur chargement base', 'error');
   });
 
-const RES = document.getElementById('result');
-const CAMERA_CONTAINER = document.getElementById('camera-container');
-const CAMERA_VIEW = document.getElementById('camera-view');
+/* ---------- 2. ELEMENTS DOM ---------- */
 
-/* Affichage des résultats */
+const RES             = document.getElementById('result');
+const CAMERA_CONT     = document.getElementById('camera-container');
+const CAMERA_VIEW     = document.getElementById('camera-view');
+const MANUAL_INPUT    = document.getElementById('manual');
+const SCAN_BTN        = document.getElementById('scan');
+
+/* ---------- 3. AFFICHAGE RESULTAT ---------- */
+
 function showResult(text, type = '') {
   RES.textContent = text;
-  RES.className = type;
+  RES.className   = type;            // '' | 'success' | 'error'
 }
 
-/* Lookup principal */
-function lookup(addr) {
-  if (!addr) {
-    showResult('❌ Adresse vide', 'error');
-    return;
-  }
-  
+/* ---------- 4. FONCTION PRINCIPALE lookup(addr) ---------- */
+
+async function lookup(addr) {
+  if (!addr) { showResult('Adresse vide', 'error'); return; }
+
   addr = addr.toUpperCase().trim();
   const key = DB[addr] || '';
-  
-  if (key) {
-    showResult(`🔑 Clé: ${key}`, 'success');
-  } else {
-    showResult('❓ Adresse inconnue', 'error');
-  }
-  
-  // Sauvegarde dans la queue
-  const q = JSON.parse(localStorage.getItem('q') || '[]');
-  q.push({ 
-    addr, 
-    key: key || 'INCONNU', 
-    ts: Date.now() 
-  });
-  localStorage.setItem('q', JSON.stringify(q));
-  
-  send();
+
+  showResult(
+    key ? `🔑 Clé : ${key}` : '❓ Adresse inconnue',
+    key ? 'success'        : 'error'
+  );
+
+  /* ---- Ecriture / mise à jour Firestore ---- */
+  const ref = db.collection('adresses').doc(addr);
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now  = firebase.firestore.FieldValue.serverTimestamp();
+
+    if (snap.exists) {
+      tx.update(ref, {
+        count:       firebase.firestore.FieldValue.increment(1),
+        lastScanned: now
+      });
+    } else {
+      tx.set(ref, {
+        key,
+        count:        1,
+        firstScanned: now,
+        lastScanned:  now
+      });
+    }
+  }).catch(err => console.error('⚠️ Firestore', err));
 }
 
-/* Saisie manuelle */
-document.getElementById('manual').addEventListener('keypress', (e) => {
+/* ---------- 5. SAISIE MANUELLE ---------- */
+
+MANUAL_INPUT.addEventListener('keypress', e => {
   if (e.key === 'Enter') {
-    const value = e.target.value.trim();
-    if (value) {
-      lookup(value);
-      e.target.value = ''; // Vider le champ
-    }
+    const v = e.target.value.trim();
+    if (v) { lookup(v); e.target.value = ''; }
   }
 });
 
-/* Variables pour la caméra */
+/* ---------- 6. SCAN CAMÉRA via Quagga ---------- */
+
 let isScanning = false;
 
-/* Bouton Scanner */
-document.getElementById('scan').onclick = async () => {
-  if (isScanning) {
-    stopScanning();
-    return;
-  }
-  
-  try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('getUserMedia non supporté par ce navigateur');
-    }
-    
-    showResult('🔄 Demande d\'accès à la caméra...', '');
-    
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        facingMode: 'environment',
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      }
-    });
-    
-    stream.getTracks().forEach(track => track.stop());
-    
-    startQuagga();
-    
-  } catch (error) {
-    console.error('Erreur caméra:', error);
-    let errorMsg = '❌ ';
-    
-    if (error.name === 'NotAllowedError') {
-      errorMsg += 'Permission caméra refusée';
-    } else if (error.name === 'NotFoundError') {
-      errorMsg += 'Caméra non trouvée';
-    } else if (error.name === 'NotSupportedError') {
-      errorMsg += 'Caméra non supportée';
-    } else {
-      errorMsg += 'Erreur caméra: ' + error.message;
-    }
-    
-    showResult(errorMsg, 'error');
-  }
-};
+SCAN_BTN.onclick = () => isScanning ? stopScanning() : startCamera();
 
-/* Démarrer Quagga */
+async function startCamera() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('getUserMedia non supporté');
+    }
+    showResult('Demande d’accès à la caméra…');
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }});
+    stream.getTracks().forEach(t => t.stop());   // juste pour déclencher la permission
+    startQuagga();
+  } catch (err) {
+    console.error('Caméra :', err);
+    showResult('Caméra indisponible', 'error');
+  }
+}
+
 function startQuagga() {
   isScanning = true;
-  document.getElementById('scan').textContent = '⏹️ Arrêter';
-  CAMERA_CONTAINER.style.display = 'block';
-  showResult('📷 Pointez vers un code-barres Code 128...', '');
-  
+  SCAN_BTN.textContent        = '⏹️ Arrêter';
+  CAMERA_CONT.style.display   = 'block';
+  showResult('📷 Visez le code barre…');
+
   Quagga.init({
-    inputStream: {
-      type: 'LiveStream',
-      target: CAMERA_VIEW,
-      constraints: {
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 },
-        facingMode: 'environment'
-      }
+    inputStream:{
+      type:'LiveStream',
+      target:CAMERA_VIEW,
+      constraints:{ facingMode:'environment' }
     },
-    decoder: {
-      readers: ['code_128_reader'],
-      debug: { showCanvas: false }
-    },
-    locate: true,
-    locator: {
-      patchSize: 'large',
-      halfSample: false
-    },
-    numOfWorkers: 2,
-    frequency: 10
-  }, (err) => {
-    if (err) {
-      console.error('Erreur Quagga init:', err);
-      showResult('❌ Erreur initialisation scanner: ' + err.message, 'error');
-      stopScanning();
-      return;
-    }
-    
-    console.log('Quagga initialisé avec succès pour Code 128');
+    decoder:{ readers:['code_128_reader'] },
+    numOfWorkers:2,
+    locate:true
+  }, (err)=>{
+    if(err){ showResult('Erreur scanner', 'error'); console.error(err); stopScanning(); return; }
     Quagga.start();
   });
-  
-  Quagga.onProcessed((result) => {
-    const drawingCtx = Quagga.canvas.ctx.overlay;
-    const drawingCanvas = Quagga.canvas.dom.overlay;
-    if (result) {
-      drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-      if (result.boxes) {
-        result.boxes.filter(box => box !== result.box).forEach(box => {
-          Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
-        });
-      }
-      if (result.box) {
-        Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
-      }
-    }
-  });
-  
-  Quagga.onDetected((result) => {
-    const code = result.codeResult.code;
-    const format = result.codeResult.format;
-    
-    if (format === 'code_128' && code && code.length >= 3) {
-      if (navigator.vibrate) navigator.vibrate(200);
+
+  Quagga.onDetected(res=>{
+    const code = res.codeResult?.code;
+    if (code) {
+      navigator.vibrate?.(150);
       stopScanning();
       lookup(code);
     }
   });
 }
 
-/* Arrêter le scanning */
 function stopScanning() {
   if (!isScanning) return;
-  
   isScanning = false;
-  document.getElementById('scan').textContent = '📷 Scanner';
-  CAMERA_CONTAINER.style.display = 'none';
-  
-  try {
-    Quagga.stop();
-    Quagga.offDetected();
-  } catch (e) {
-    console.warn('Erreur arrêt Quagga:', e);
-  }
+  SCAN_BTN.textContent        = '📷 Scanner';
+  CAMERA_CONT.style.display   = 'none';
+  try { Quagga.stop(); Quagga.offDetected(); } catch(e){}
 }
 
-/* Bouton arrêter scan */
-document.getElementById('stop-scan').onclick = stopScanning;
+/* ---------- 7. LISTE “À RÉIMPRIMER” TEMPS RÉEL ---------- */
 
+const TODO_BTN  = document.createElement('button');
+TODO_BTN.id     = 'todo';
+TODO_BTN.textContent = '📋 À réimprimer';
+TODO_BTN.style.marginTop = '1rem';
+document.body.insertBefore(TODO_BTN, CAMERA_CONT.nextSibling);
 
-// ===================================================================
-// FONCTION D'ENVOI MISE À JOUR POUR UTILISER GOOGLE APPS SCRIPT
-// ===================================================================
-function send() {
-  if (!navigator.onLine) {
-    console.log('Hors ligne, envoi différé.');
-    return;
-  }
-  
-  const q = JSON.parse(localStorage.getItem('q') || '[]');
-  if (!q.length) return;
-  
-  const { addr, key } = q[0];
-  console.log('🚀 Envoi vers Apps Script:', { addr, key });
+const LIST_DIV  = document.createElement('div');
+LIST_DIV.id     = 'list';
+LIST_DIV.style.display = 'none';
+LIST_DIV.style.marginTop = '1rem';
+document.body.appendChild(LIST_DIV);
 
-  // On construit une URL avec des paramètres de requête
-  const url = new URL(SCRIPT_URL);
-  url.searchParams.append('addr', addr);
-  url.searchParams.append('key', key);
+TODO_BTN.onclick = ()=> {
+  LIST_DIV.style.display = LIST_DIV.style.display==='none' ? 'block':'none';
+};
 
-  // On utilise une requête GET simple et on lit la réponse JSON
-  fetch(url, {
-    method: 'GET',
-    redirect: 'follow'
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      console.log('✅ Succès - Données envoyées via Apps Script:', data.data);
-      showResult(`✅ Envoyé: ${addr} → ${key}`, 'success');
-
-      // On retire de la queue SEULEMENT si l'envoi a réussi
-      q.shift();
-      localStorage.setItem('q', JSON.stringify(q));
-      
-      // On envoie le suivant s'il y en a un
-      if (q.length > 0) {
-        setTimeout(send, 500);
-      }
-    } else {
-      // Gérer une erreur renvoyée par le script (ex: feuille non trouvée)
-      throw new Error(data.message || 'Erreur inconnue du script');
-    }
-  })
-  .catch((error) => {
-    console.error('❌ Erreur envoi vers Apps Script:', error);
-    showResult(`❌ Erreur envoi: ${error.message}`, 'error');
-    // On ne retire pas de la queue, on réessaiera plus tard
-  });
-}
-
-
-/* Réessayer l'envoi quand on revient en ligne */
-window.addEventListener('online', () => {
-  console.log('Connexion rétablie, envoi des données...');
-  send();
-});
-
-/* Debug info */
-console.log('App initialisée');
-console.log('Support getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
-console.log('Support ServiceWorker:', 'serviceWorker' in navigator);
-
-
-// ===================================================================
-// FONCTION DE TEST MISE À JOUR
-// ===================================================================
-function testSend() {
-  console.log('🧪 Test envoi Apps Script...');
-  
-  const testUrl = new URL(SCRIPT_URL);
-  testUrl.searchParams.append('addr', 'TEST_APP_JS');
-  testUrl.searchParams.append('key', 'CLE_TEST_SCRIPT');
-
-  fetch(testUrl, { method: 'GET', redirect: 'follow' })
-    .then(r => r.json())
-    .then(data => {
-      console.log('✅ Réponse du test:', data);
-      if (data.status === 'success') {
-        showResult('✅ Test envoi réussi via Apps Script !', 'success');
-      } else {
-        showResult(`❌ Test envoi échoué: ${data.message}`, 'error');
-      }
-    })
-    .catch(err => {
-      console.error('❌ Test envoi échoué:', err);
-      showResult('❌ Test envoi échoué: ' + err.message, 'error');
+db.collection('adresses').orderBy('firstScanned')
+  .onSnapshot(snap=>{
+    LIST_DIV.innerHTML = '';
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;' +
+                          'align-items:center;border-bottom:1px solid #ccc;padding:.5rem;';
+      row.innerHTML = `
+        <div>
+          <strong>${doc.id}</strong> → ${d.key || '???'}<br>
+          <small>scans : ${d.count} | 1ᵉʳ : ${
+            d.firstScanned?.toDate().toLocaleDateString()}</small>
+        </div>
+        <button style="background:#dc2626;color:#fff;border:none;
+                       border-radius:4px;cursor:pointer;">🗑️</button>`;
+      row.querySelector('button').onclick =
+        ()=>db.collection('adresses').doc(doc.id).delete();
+      LIST_DIV.appendChild(row);
     });
-}
+  });
 
-// Bouton de test (temporaire)
-const testBtn = document.createElement('button');
-testBtn.textContent = '🧪 Test Script'; // Texte mis à jour
-testBtn.onclick = testSend;
-testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:0.5rem;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;z-index:9999;';
-document.body.appendChild(testBtn);
+console.log('✅ App initialisée – getUserMedia',
+            !!navigator.mediaDevices?.getUserMedia,
+            '| ServiceWorker', 'serviceWorker' in navigator);

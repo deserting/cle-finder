@@ -1,13 +1,36 @@
 {
   "name": "Clé-Finder",
   "short_name": "Clés",
+  "description": "Scanner de codes-barres pour trouver les clés correspondantes",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#0d9488",
+  "categories": ["utilities", "productivity"],
+  "lang": "fr",
+  "dir": "ltr",
   "icons": [
-    { "src": "icons/192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "icons/192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
   ]
 }

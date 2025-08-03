@@ -1,15 +1,16 @@
-/* ← colle ici ton URL “formResponse”  */
+/* URL Google Forms : /formResponse */
 const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeGrY3_tG_8myZaIDc5TFdBP13UaYoH75uuWFkXstprxp6Kug/formResponse';
-/* ← ID adresse  */ const A = 'entry.491906939';
-/* ← ID clé      */ const K = 'entry.2038384954';
+/* IDs des deux questions */
+const A = 'entry.491906939';   // Adresse
+const K = 'entry.2038384954';  // Clé
 
-/* 1) charge la base */
+/* Charge la base locale */
 let DB = {};
 fetch('./db.json').then(r => r.json()).then(j => DB = j);
 
 const RES = document.getElementById('result');
 
-/* 2) recherche + log */
+/* Lookup + log */
 function lookup(addr) {
   addr = addr.toUpperCase().trim();
   const key = DB[addr] || '';
@@ -21,16 +22,15 @@ function lookup(addr) {
   send();
 }
 
-/* 3) saisie manuelle */
+/* Saisie manuelle */
 document.getElementById('manual')
   .addEventListener('keypress', e => { if (e.key === 'Enter') lookup(e.target.value); });
 
-/* 4) scan caméra */
+/* Scan */
 document.getElementById('scan').onclick = () => {
   Quagga.init({
-    inputStream: { type: 'LiveStream',
-                   constraints: { facingMode: 'environment' } },
-    decoder: { readers: ['code_128_reader', 'ean_reader'] }
+    inputStream: { type:'LiveStream', constraints:{ facingMode:'environment' } },
+    decoder: { readers:['code_128_reader','ean_reader'] }
   }, err => {
     if (err) { alert(err); return; }
     Quagga.onDetected(d => { Quagga.stop(); lookup(d.codeResult.code); });
@@ -38,16 +38,17 @@ document.getElementById('scan').onclick = () => {
   });
 };
 
-/* 5) envoi vers Google Forms */
+/* Envoi vers Google Forms (queue offline) */
 function send() {
   if (!navigator.onLine) return;
   const q = JSON.parse(localStorage.q || '[]');
   if (!q.length) return;
 
   const { addr, key } = q[0];
-  const form = new URLSearchParams({ [A]: addr, [K]: key });
-  fetch(FORM_URL, { method: 'POST', body: form, mode: 'no-cors' })
+  const body = new URLSearchParams({ [A]: addr, [K]: key });
+
+  fetch(FORM_URL, { method:'POST', body, mode:'no-cors' })
     .then(() => { q.shift(); localStorage.q = JSON.stringify(q); send(); })
-    .catch(() => {}); // réessaiera plus tard
+    .catch(() => {});          // réessaiera plus tard
 }
 window.addEventListener('online', send);

@@ -1,11 +1,11 @@
 /* ← colle ici ton URL “formResponse”  */
 const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeGrY3_tG_8myZaIDc5TFdBP13UaYoH75uuWFkXstprxp6Kug/formResponse';
-/* ← colle ici l’ID adresse  */ const A = 'entry.491906939';
-/* ← colle ici l’ID clé      */ const K = 'entry.2038384954';
+/* ← ID adresse  */ const A = 'entry.491906939';
+/* ← ID clé      */ const K = 'entry.2038384954';
 
 /* 1) charge la base */
 let DB = {};
-fetch('db.json').then(r => r.json()).then(j => DB = j);
+fetch('./db.json').then(r => r.json()).then(j => DB = j);
 
 const RES = document.getElementById('result');
 
@@ -48,6 +48,6 @@ function send() {
   const form = new URLSearchParams({ [A]: addr, [K]: key });
   fetch(FORM_URL, { method: 'POST', body: form, mode: 'no-cors' })
     .then(() => { q.shift(); localStorage.q = JSON.stringify(q); send(); })
-    .catch(() => {});            // réessaiera plus tard
+    .catch(() => {}); // réessaiera plus tard
 }
 window.addEventListener('online', send);

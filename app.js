@@ -1,9 +1,5 @@
-/* URL Google Forms - REMPLACEZ PAR LA VÔTRE */
-const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScm3l6PUAdxjPMLYfBG4lxOtRck841g-7RorNA9o1AfPalo0w/formResponse';
-
-/* IDs des questions - REMPLACEZ PAR LES VRAIS IDs */
-const A = 'entry.743566504';   // Adresse - VÉRIFIEZ CET ID !
-const K = 'entry.838175931';  // Clé - VÉRIFIEZ CET ID !
+/* URL de VOTRE Google Apps Script */
+const SCRIPT_URL = 'https://script.google.com/a/macros/auchan.fr/s/AKfycbywcvs3EBokeLltMb7m-47nJve7qxcf8On6KrC6ZojBK4__32-13BCNl-bvNvwyqs07/exec';
 
 /* Base de données locale */
 let DB = {};
@@ -80,14 +76,12 @@ document.getElementById('scan').onclick = async () => {
   }
   
   try {
-    // Vérifier le support des médias
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error('getUserMedia non supporté par ce navigateur');
     }
     
     showResult('🔄 Demande d\'accès à la caméra...', '');
     
-    // Demander permission caméra
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { 
         facingMode: 'environment',
@@ -96,7 +90,6 @@ document.getElementById('scan').onclick = async () => {
       }
     });
     
-    // Arrêter le stream immédiatement (Quagga va créer le sien)
     stream.getTracks().forEach(track => track.stop());
     
     startQuagga();
@@ -137,26 +130,13 @@ function startQuagga() {
       }
     },
     decoder: {
-      readers: ['code_128_reader'], // Focus uniquement sur Code 128
-      debug: {
-        showCanvas: false,
-        showPatches: false,
-        showFoundPatches: false,
-        showSkeleton: false,
-        showLabels: false,
-        showPatchLabels: false,
-        showRemainingPatchLabels: false,
-        boxFromPatches: {
-          showTransformed: false,
-          showTransformedBox: false,
-          showBB: false
-        }
-      }
+      readers: ['code_128_reader'],
+      debug: { showCanvas: false }
     },
     locate: true,
     locator: {
-      patchSize: 'large', // Patch plus large pour Code 128
-      halfSample: false   // Pas de sous-échantillonnage
+      patchSize: 'large',
+      halfSample: false
     },
     numOfWorkers: 2,
     frequency: 10
@@ -172,48 +152,30 @@ function startQuagga() {
     Quagga.start();
   });
   
-  // Debug : afficher toutes les tentatives
   Quagga.onProcessed((result) => {
     const drawingCtx = Quagga.canvas.ctx.overlay;
     const drawingCanvas = Quagga.canvas.dom.overlay;
-
     if (result) {
-      // Dessiner les zones détectées
+      drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
       if (result.boxes) {
-        drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
         result.boxes.filter(box => box !== result.box).forEach(box => {
           Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
         });
       }
-
       if (result.box) {
         Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
-      }
-
-      if (result.codeResult && result.codeResult.code) {
-        Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
       }
     }
   });
   
-  // Écouter les détections avec validation
   Quagga.onDetected((result) => {
     const code = result.codeResult.code;
     const format = result.codeResult.format;
     
-    console.log('Code détecté:', code, 'Format:', format);
-    
-    // Validation : doit être Code 128 et correspondre au pattern attendu
     if (format === 'code_128' && code && code.length >= 3) {
-      // Vibration si supportée
-      if (navigator.vibrate) {
-        navigator.vibrate(200);
-      }
-      
+      if (navigator.vibrate) navigator.vibrate(200);
       stopScanning();
       lookup(code);
-    } else {
-      console.log('Code ignoré - format:', format, 'longueur:', code?.length);
     }
   });
 }
@@ -237,10 +199,13 @@ function stopScanning() {
 /* Bouton arrêter scan */
 document.getElementById('stop-scan').onclick = stopScanning;
 
-/* Envoi vers Google Forms - VERSION CORRIGÉE */
+
+// ===================================================================
+// FONCTION D'ENVOI MISE À JOUR POUR UTILISER GOOGLE APPS SCRIPT
+// ===================================================================
 function send() {
   if (!navigator.onLine) {
-    console.log('Hors ligne, envoi différé');
+    console.log('Hors ligne, envoi différé.');
     return;
   }
   
@@ -248,48 +213,44 @@ function send() {
   if (!q.length) return;
   
   const { addr, key } = q[0];
-  
-  console.log('🚀 Envoi:', { addr, key });
-  
-  // IMPORTANT : Utiliser URLSearchParams avec le bon Content-Type
-  const formData = new URLSearchParams();
-  formData.append(A, addr);
-  formData.append(K, key);
-  
-  console.log('📤 Données à envoyer:', formData.toString());
-  
-  fetch(FORM_URL, {
-    method: 'POST',
-    body: formData,
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
+  console.log('🚀 Envoi vers Apps Script:', { addr, key });
+
+  // On construit une URL avec des paramètres de requête
+  const url = new URL(SCRIPT_URL);
+  url.searchParams.append('addr', addr);
+  url.searchParams.append('key', key);
+
+  // On utilise une requête GET simple et on lit la réponse JSON
+  fetch(url, {
+    method: 'GET',
+    redirect: 'follow'
   })
-  .then((response) => {
-    console.log('✅ Réponse:', response.type);
-    console.log('📨 Succès - Données envoyées:', addr, '→', key);
-    
-    // Retirer de la queue
-    q.shift();
-    localStorage.setItem('q', JSON.stringify(q));
-    
-    // Message de succès visible
-    showResult(`✅ Envoyé: ${addr} → ${key}`, 'success');
-    
-    // Envoyer le suivant s'il y en a
-    if (q.length > 0) {
-      setTimeout(send, 1000);
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      console.log('✅ Succès - Données envoyées via Apps Script:', data.data);
+      showResult(`✅ Envoyé: ${addr} → ${key}`, 'success');
+
+      // On retire de la queue SEULEMENT si l'envoi a réussi
+      q.shift();
+      localStorage.setItem('q', JSON.stringify(q));
+      
+      // On envoie le suivant s'il y en a un
+      if (q.length > 0) {
+        setTimeout(send, 500);
+      }
+    } else {
+      // Gérer une erreur renvoyée par le script (ex: feuille non trouvée)
+      throw new Error(data.message || 'Erreur inconnue du script');
     }
   })
   .catch((error) => {
-    console.error('❌ Erreur envoi:', error);
+    console.error('❌ Erreur envoi vers Apps Script:', error);
     showResult(`❌ Erreur envoi: ${error.message}`, 'error');
-    
-    // Ne pas retirer de la queue en cas d'erreur
-    // Réessaiera plus tard
+    // On ne retire pas de la queue, on réessaiera plus tard
   });
 }
+
 
 /* Réessayer l'envoi quand on revient en ligne */
 window.addEventListener('online', () => {
@@ -302,37 +263,36 @@ console.log('App initialisée');
 console.log('Support getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
 console.log('Support ServiceWorker:', 'serviceWorker' in navigator);
 
-// FONCTION DE TEST - Ajoutez un bouton pour tester l'envoi
+
+// ===================================================================
+// FONCTION DE TEST MISE À JOUR
+// ===================================================================
 function testSend() {
-  console.log('🧪 Test envoi Google Forms...');
+  console.log('🧪 Test envoi Apps Script...');
   
-  const testData = new URLSearchParams();
-  testData.append(A, 'TEST123');
-  testData.append(K, 'CLE456');
-  
-  console.log('📤 Test data:', testData.toString());
-  
-  fetch(FORM_URL, {
-    method: 'POST',
-    body: testData,
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
-  })
-  .then(() => {
-    console.log('✅ Test envoi réussi');
-    showResult('✅ Test envoi réussi - Vérifiez votre Google Sheets !', 'success');
-  })
-  .catch(err => {
-    console.error('❌ Test envoi échoué:', err);
-    showResult('❌ Test envoi échoué: ' + err.message, 'error');
-  });
+  const testUrl = new URL(SCRIPT_URL);
+  testUrl.searchParams.append('addr', 'TEST_APP_JS');
+  testUrl.searchParams.append('key', 'CLE_TEST_SCRIPT');
+
+  fetch(testUrl, { method: 'GET', redirect: 'follow' })
+    .then(r => r.json())
+    .then(data => {
+      console.log('✅ Réponse du test:', data);
+      if (data.status === 'success') {
+        showResult('✅ Test envoi réussi via Apps Script !', 'success');
+      } else {
+        showResult(`❌ Test envoi échoué: ${data.message}`, 'error');
+      }
+    })
+    .catch(err => {
+      console.error('❌ Test envoi échoué:', err);
+      showResult('❌ Test envoi échoué: ' + err.message, 'error');
+    });
 }
 
 // Bouton de test (temporaire)
 const testBtn = document.createElement('button');
-testBtn.textContent = '🧪 Test Forms';
+testBtn.textContent = '🧪 Test Script'; // Texte mis à jour
 testBtn.onclick = testSend;
 testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:0.5rem;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;z-index:9999;';
 document.body.appendChild(testBtn);

@@ -1,9 +1,9 @@
-/* URL Google Forms */
+/* URL Google Forms - REMPLACEZ PAR LA VÔTRE */
 const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeGrY3_tG_8myZaIDc5TFdBP13UaYoH75uuWFkXstprxp6Kug/formResponse';
 
-/* IDs des questions */
-const A = 'entry.491906939';   // Adresse
-const K = 'entry.2038384954';  // Clé
+/* IDs des questions - REMPLACEZ PAR LES VRAIS IDs */
+const A = 'entry.491906939';   // Adresse - VÉRIFIEZ CET ID !
+const K = 'entry.2038384954';  // Clé - VÉRIFIEZ CET ID !
 
 /* Base de données locale */
 let DB = {};
@@ -237,7 +237,7 @@ function stopScanning() {
 /* Bouton arrêter scan */
 document.getElementById('stop-scan').onclick = stopScanning;
 
-/* Envoi vers Google Forms avec debug */
+/* Envoi vers Google Forms - VERSION CORRIGÉE */
 function send() {
   if (!navigator.onLine) {
     console.log('Hors ligne, envoi différé');
@@ -249,64 +249,45 @@ function send() {
   
   const { addr, key } = q[0];
   
-  console.log('🚀 Tentative d\'envoi:', { addr, key });
+  console.log('🚀 Envoi:', { addr, key });
   
-  const formData = new FormData();
+  // IMPORTANT : Utiliser URLSearchParams avec le bon Content-Type
+  const formData = new URLSearchParams();
   formData.append(A, addr);
   formData.append(K, key);
   
-  // Alternative avec URLSearchParams pour debug
-  const params = new URLSearchParams();
-  params.append(A, addr);
-  params.append(K, key);
+  console.log('📤 Données à envoyer:', formData.toString());
   
-  console.log('📤 Données FormData:', formData);
-  console.log('📤 URL params:', params.toString());
-  console.log('📤 URL complète:', FORM_URL);
-  
-  // Essayer avec FormData d'abord
   fetch(FORM_URL, {
     method: 'POST',
     body: formData,
-    mode: 'no-cors'
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
   })
   .then((response) => {
-    console.log('✅ Réponse reçue:', response.status, response.type);
-    console.log('📨 Données envoyées avec succès:', addr, '→', key);
+    console.log('✅ Réponse:', response.type);
+    console.log('📨 Succès - Données envoyées:', addr, '→', key);
     
     // Retirer de la queue
     q.shift();
     localStorage.setItem('q', JSON.stringify(q));
     
+    // Message de succès visible
+    showResult(`✅ Envoyé: ${addr} → ${key}`, 'success');
+    
     // Envoyer le suivant s'il y en a
     if (q.length > 0) {
-      setTimeout(send, 1000); // Délai d'1 seconde entre envois
+      setTimeout(send, 1000);
     }
   })
   .catch((error) => {
     console.error('❌ Erreur envoi:', error);
+    showResult(`❌ Erreur envoi: ${error.message}`, 'error');
     
-    // Essayer avec URLSearchParams en cas d'échec
-    console.log('🔄 Nouvelle tentative avec URLSearchParams...');
-    
-    fetch(FORM_URL, {
-      method: 'POST',
-      body: params,
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    })
-    .then(() => {
-      console.log('✅ Succès avec URLSearchParams');
-      q.shift();
-      localStorage.setItem('q', JSON.stringify(q));
-      if (q.length > 0) setTimeout(send, 1000);
-    })
-    .catch((err) => {
-      console.error('❌ Échec total:', err);
-      // Réessaiera plus tard quand la connexion reviendra
-    });
+    // Ne pas retirer de la queue en cas d'erreur
+    // Réessaiera plus tard
   });
 }
 
@@ -324,23 +305,34 @@ console.log('Support ServiceWorker:', 'serviceWorker' in navigator);
 // FONCTION DE TEST - Ajoutez un bouton pour tester l'envoi
 function testSend() {
   console.log('🧪 Test envoi Google Forms...');
-  const testData = new URLSearchParams({
-    [A]: 'TEST123',
-    [K]: 'CLE456'
-  });
+  
+  const testData = new URLSearchParams();
+  testData.append(A, 'TEST123');
+  testData.append(K, 'CLE456');
+  
+  console.log('📤 Test data:', testData.toString());
   
   fetch(FORM_URL, {
     method: 'POST',
     body: testData,
-    mode: 'no-cors'
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
   })
-  .then(() => console.log('✅ Test envoi réussi'))
-  .catch(err => console.error('❌ Test envoi échoué:', err));
+  .then(() => {
+    console.log('✅ Test envoi réussi');
+    showResult('✅ Test envoi réussi - Vérifiez votre Google Sheets !', 'success');
+  })
+  .catch(err => {
+    console.error('❌ Test envoi échoué:', err);
+    showResult('❌ Test envoi échoué: ' + err.message, 'error');
+  });
 }
 
 // Bouton de test (temporaire)
 const testBtn = document.createElement('button');
 testBtn.textContent = '🧪 Test Forms';
 testBtn.onclick = testSend;
-testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:0.5rem;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;';
+testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:0.5rem;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;z-index:9999;';
 document.body.appendChild(testBtn);

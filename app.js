@@ -1,9 +1,9 @@
 /* URL Google Forms - REMPLACEZ PAR LA VÔTRE */
-const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeGrY3_tG_8myZaIDc5TFdBP13UaYoH75uuWFkXstprxp6Kug/formResponse';
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScm3l6PUAdxjPMLYfBG4lxOtRck841g-7RorNA9o1AfPalo0w/formResponse';
 
 /* IDs des questions - REMPLACEZ PAR LES VRAIS IDs */
-const A = 'entry.491906939';   // Adresse - VÉRIFIEZ CET ID !
-const K = 'entry.2038384954';  // Clé - VÉRIFIEZ CET ID !
+const A = 'entry.743566504';   // Adresse - VÉRIFIEZ CET ID !
+const K = 'entry.838175931';  // Clé - VÉRIFIEZ CET ID !
 
 /* Base de données locale */
 let DB = {};

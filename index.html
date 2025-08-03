@@ -16,6 +16,8 @@
     #camera-view{max-width:100%;height:auto;border:2px solid #0d9488;border-radius:4px}
     .error{color:#dc2626;background:#fef2f2;border:1px solid #fecaca}
     .success{color:#059669;background:#f0fdf4;border:1px solid #bbf7d0}
+    #list div:hover{background:#f8fafc}
+#nav button{font-size:1rem}
   </style>
 </head>
 <body>
@@ -32,6 +34,15 @@
     <div id="camera-view"></div>
     <button id="stop-scan" style="margin-top:10px">Arrêter</button>
   </div>
+
+  <!-- barre nav mobile -->
+<nav id="nav" style="position:fixed;bottom:0;left:0;right:0;
+        display:flex;justify-content:space-around;
+        background:#0d9488;color:#fff">
+  <button id="tab-scan" style="flex:1;padding:.8rem;border:none;background:#0d9488;color:#fff">📷 Scanner</button>
+  <button id="tab-todo" style="flex:1;padding:.8rem;border:none;background:#0f766e;color:#fff">📋 À réimprimer</button>
+</nav>
+
 
   <!-- Firebase (compat SDKs) -->
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>

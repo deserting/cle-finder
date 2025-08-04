@@ -4,155 +4,111 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Clé-Finder</title>
+
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0d9488">
+  <meta name="theme-color" content="#222629">
 
-  <style>
-    body{font-family:sans-serif;padding:1rem;max-width:600px;margin:0 auto}
-    #manual{width:70%;padding:.5rem;font-size:1rem;border:2px solid #ccc;border-radius:4px}
-    #scan{padding:.5rem 1rem;font-size:1rem;background:#0d9488;color:#fff;border:none;border-radius:4px;cursor:pointer}
-    #scan:hover{background:#0f766e}
-    #result{margin:1rem 0;padding:1rem;background:#f0f9ff;border-radius:4px;min-height:50px;display:flex;align-items:center;justify-content:center}
-    #camera-view{max-width:100%;height:auto;border:2px solid #0d9488;border-radius:4px}
-    .error{color:#dc2626;background:#fef2f2;border:1px solid #fecaca}
-    .success{color:#059669;background:#f0fdf4;border:1px solid #bbf7d0}
-    #list div:hover{background:#f8fafc}
-#nav button{font-size:1rem}
-  </style>
-</head>
-<body>
-  <h1>🔑 Clé-Finder</h1>
+  <!-- Feuille de style principale -->
+  <link rel="stylesheet" href="style.css">
 
-  <div>
-    <input id="manual" placeholder="Tapez l'adresse…" autocomplete="off">
-    <button id="scan">📷 Scanner</button>
-  </div>
-
-  <div id="result">Saisissez ou scannez une adresse</div>
-
-  <div id="camera-container" style="display:none">
-    <div id="camera-view"></div>
-    <button id="stop-scan" style="margin-top:10px">Arrêter</button>
-  </div>
-
-  <!-- barre nav mobile -->
-<nav id="nav" style="position:fixed;bottom:0;left:0;right:0;
-        display:flex;justify-content:space-around;
-        background:#0d9488;color:#fff">
-  <button id="tab-scan" style="flex:1;padding:.8rem;border:none;background:#0d9488;color:#fff">📷 Scanner</button>
-  <button id="tab-todo" style="flex:1;padding:.8rem;border:none;background:#0f766e;color:#fff">📋 À réimprimer</button>
-</nav>
-
-<!-- bouton info -->
-<button id="info-btn" aria-label="Infos"
-        style="position:fixed;top:10px;right:10px;
-               background:transparent;border:none;font-size:1.4rem;
-               color:#0a2540;z-index:90">ⓘ</button>
-
-<!-- panneau latéral -->
-<aside id="about" style="
-    position:fixed;top:0;right:0;bottom:0;width:320px;
-    background:#fff;border-left:1px solid #e2e8f0;
-    padding:1rem 1.2rem;box-shadow:-4px 0 10px rgba(0,0,0,.08);
-    transform:translateX(100%);           /* ← caché hors écran */
-    transition:transform .25s ease;z-index:85">
-
-  <h2 style="margin-top:0;font-size:1.2rem;color:#0a2540">À propos</h2>
-  <div id="ver"></div>
-  <hr>
-  <div id="history" style="font-size:.9rem;line-height:1.35"></div>
-  <button id="update" style="margin-top:1rem;background:#0a2540;color:#fff;
-          border:none;padding:.5rem .8rem;border-radius:6px;cursor:pointer">
-    🔄 Rechercher une mise à jour
-  </button>
-</aside>
-
-
-
-  <!-- Firebase (compat SDKs) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth-compat.js"></script>
+</head>
 
-  <script>
-    /* Configuration Firebase — corrige bien *storageBucket* (.appspot.com) */
-    firebase.initializeApp({
-      apiKey:            "AIzaSyD_Q-Bx8OHFhQa1X0KWlRNvzOP2c3fgG84",
-      authDomain:        "clesfinder.firebaseapp.com",
-      projectId:         "clesfinder",
-      storageBucket:     "clesfinder.appspot.com",
-      messagingSenderId: "447281549352",
-      appId:             "1:447281549352:web:abc433220d9a74885d651d"
-    });
+<body>
+  <!-- Contenu central -->
+  <main>
+    <h1>Clé-Finder</h1>
 
-    const db   = firebase.firestore();
-    firebase.auth().signInAnonymously();
-    db.enablePersistence().catch(()=>{});
-  </script>
+    <div class="actions">
+      <input id="manual" placeholder="Tapez l'adresse…" autocomplete="off">
+      <button id="scan">📷 Scanner</button>
+    </div>
 
-  <!-- Quagga puis ton code applicatif -->
+    <div id="result">Saisissez ou scannez une adresse</div>
+
+    <div id="camera-container" style="display:none">
+      <div id="camera-view"></div>
+      <button id="stop-scan" class="del">Arrêter</button>
+    </div>
+  </main>
+
+  <!-- barre de navigation -->
+  <nav id="nav">
+    <button id="tab-scan" class="active">📷<span>Scanner</span></button>
+    <button id="tab-todo" class="inactive">📋<span>À réimprimer</span></button>
+  </nav>
+
+  <!-- icône info + panneau latéral -->
+  <button id="info-btn" aria-label="Infos">ⓘ</button>
+
+  <aside id="about">
+    <h2>À propos</h2>
+    <div id="ver"></div>
+    <hr>
+    <div id="history"></div>
+
+    <button id="update">🔄 Rechercher une mise à jour</button>
+  </aside>
+
+  <!-- Quagga & logique appli -->
   <script src="https://unpkg.com/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
   <script src="./app.js"></script>
 
-  <!-- Service-worker + bannière “Installer” (inchangé) -->
+  <!-- Service Worker + bouton d’installation PWA -->
   <script>
+    /* Service-worker de l’appli */
     if ('serviceWorker' in navigator){
       navigator.serviceWorker.register('./sw.js')
-        .then(r=>console.log('SW OK',r))
-        .catch(e=>console.log('SW KO',e));
+        .then(reg => console.log('SW OK', reg))
+        .catch(err => console.log('SW KO', err));
     }
 
+    /* Bannière d’installation “Ajouter à l’écran d’accueil” */
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt',e=>{
-      e.preventDefault(); deferredPrompt=e;
-      const btn=document.createElement('button');
-      btn.textContent='📱 Installer l’app';
-      btn.style.cssText = `
-        position:fixed;bottom:64px;right:10px;       /* juste au-dessus de la nav */
-        padding:.5rem;background:#0a2540;color:#fff;
-        border:none;border-radius:4px;cursor:pointer;z-index:90`;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
 
+      const btn = document.createElement('button');
+      btn.textContent = '📱 Installer l’app';
+      btn.className   = 'install-btn';
       document.body.appendChild(btn);
-      btn.onclick=()=>{
+
+      btn.onclick = () => {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(res=>{ if(res.outcome==='accepted')btn.remove();});
+        deferredPrompt.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') btn.remove();
+        });
       };
     });
   </script>
 
+  <!-- Bannière « nouvelle version disponible » -->
   <script>
-if ('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js').then(reg=>{
-
-    // 1) quand un nouveau SW est installé / waiting
-    reg.addEventListener('updatefound',()=>{
-      const newSW = reg.installing;
-      newSW.addEventListener('statechange',()=>{
-        if(newSW.state==='installed' && navigator.serviceWorker.controller){
-          showUpdateBanner();            // ← à toi de définir
-        }
+    if ('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if(!reg) return;
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
+          });
+        });
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner();
       });
-    });
-
-    // 2) si la page a été ouverte avant que le SW soit waiting
-    if(reg.waiting && navigator.serviceWorker.controller){
-      showUpdateBanner();
     }
-  });
-}
 
-// petite bannière en bas de l’écran
-function showUpdateBanner(){
-  const bar = Object.assign(document.createElement('div'),{
-    innerHTML:'Nouvelle version disponible&nbsp;&nbsp;<button>Recharger</button>',
-    style:`position:fixed;bottom:56px;left:0;right:0;
-           background:#0a2540;color:#fff;padding:.7rem;text-align:center;z-index:80`
-  });
-  bar.querySelector('button').style = 'margin-left:.8rem;background:#fff;color:#0a2540;border:none;padding:.3rem .6rem;border-radius:4px';
-  bar.querySelector('button').onclick = ()=> window.location.reload(true);
-  document.body.appendChild(bar);
-}
-</script>
-
+    function showUpdateBanner(){
+      const bar = Object.assign(document.createElement('div'), {
+        innerHTML : 'Nouvelle version disponible&nbsp;&nbsp;<button>Recharger</button>',
+        className : 'update-banner'
+      });
+      bar.querySelector('button').onclick = () => window.location.reload(true);
+      document.body.appendChild(bar);
+    }
+  </script>
 </body>
 </html>

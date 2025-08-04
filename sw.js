@@ -1,5 +1,5 @@
 // Version du cache - incrémentez pour forcer la mise à jour
-const CACHE_VERSION = 'cle-finder-v1.1'; // ↔ même chaîne que dans app.js
+const CACHE_VERSION = 'cle-finder-v1.2'; // ↔ même chaîne que dans app.js
 // Note: La version doit correspondre à celle définie dans app.js et sw.js
 //       pour assurer la cohérence entre l'application et le service worker.
 

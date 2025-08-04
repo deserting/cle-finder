@@ -1,0 +1,82 @@
+/* ---------- Reset & variables ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --charcoal:#222629;
+  --iron:#393e46;
+  --gold:#f6c244;
+  --gold-dark:#d79d1e;
+  --snow:#f7f9fa;
+  --mint:#00c37a;
+  --rose:#f87171;
+  --radius:8px;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--snow);
+  background:var(--charcoal);
+  line-height:1.4;
+}
+
+/* ---------- Layout ---------- */
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* tête ------------------------------------------------- */
+main{flex:1;max-width:640px;margin:0 auto;padding:1.5rem 1rem 6rem} /* 6 rem = marge pour la nav fixe */
+h1{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;font-size:1.6rem;font-weight:700}
+h1::before{content:url("icons/192.png");width:32px;height:32px}
+
+/* zone saisie + bouton scan --------------------------- */
+.actions{display:flex;gap:.6rem;margin-bottom:1rem}
+#manual{flex:1;padding:.7rem;border:2px solid var(--iron);border-radius:var(--radius);background:var(--iron);color:var(--snow)}
+#manual::placeholder{color:#9aa1a9}
+#scan{padding:.7rem 1.2rem;border:none;border-radius:var(--radius);background:var(--gold);color:var(--charcoal);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.4rem}
+#scan:hover{background:var(--gold-dark)}
+#scan:focus-visible{outline:2px solid var(--snow)}
+
+/* résultat ------------------------------------------- */
+#result{padding:1.1rem;border-radius:var(--radius);background:var(--iron);text-align:center;transition:.2s}
+.success{background:rgba(0,195,122,.15);color:var(--mint)}
+.error  {background:rgba(248,113,113,.15);color:var(--rose)}
+
+/* caméra --------------------------------------------- */
+#camera-container{margin-top:1rem}
+#camera-view{width:100%;aspect-ratio:4/3;border:2px dashed var(--gold-dark);border-radius:var(--radius)}
+
+/* nav fixe en bas ------------------------------------ */
+#nav{position:fixed;bottom:0;left:0;right:0;display:flex;height:56px;background:var(--iron);backdrop-filter:blur(6px);z-index:20}
+#nav button{flex:1;border:none;background:none;color:var(--snow);font-size:1.05rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+#nav button.inactive{color:#9aa1a9}
+#nav button.active{background:var(--gold);color:var(--charcoal)}
+
+/* liste “À réimprimer” ------------------------------- */
+#list{padding:1rem;display:grid;gap:.9rem}
+.card{background:var(--iron);border-radius:var(--radius);padding:.9rem;display:flex;justify-content:space-between;align-items:center}
+.card button{border:none;background:var(--rose);color:var(--snow);padding:.4rem .65rem;border-radius:var(--radius);cursor:pointer}
+.card small{display:block;color:#cbd0d6;font-size:.82rem}
+
+/* panneau latéral info ------------------------------- */
+#about{
+  position:fixed;top:0;right:0;bottom:0;
+  width:80%;max-width:360px;padding:1.4rem 1.2rem;overflow-y:auto;
+  background:var(--charcoal);box-shadow:-6px 0 12px rgba(0,0,0,.4);
+  transform:translateX(100%);transition:transform .3s ease;z-index:30;
+}
+#about.open{transform:translateX(0)}
+#about h2{margin-bottom:1rem;color:var(--gold)}
+#history strong{color:var(--gold)}
+#update{margin-top:1.2rem;background:var(--gold);color:var(--charcoal);padding:.6rem 1rem;border:none;border-radius:var(--radius);cursor:pointer}
+
+/* bouton info (en haut à gauche) --------------------- */
+#info-btn{
+  position:fixed;top:1rem;left:1rem;z-index:40;
+  width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);
+  background:none;color:var(--gold);font-size:1.4rem;cursor:pointer;
+}
+#info-btn:focus-visible{outline:2px solid var(--snow)}
+
+/* bouton install & bannière maj ---------------------- */
+.install-btn,.update-banner{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);border:none;padding:.8rem 1.4rem;border-radius:var(--radius);background:var(--gold);color:var(--charcoal);font-weight:600;z-index:50}
+
+/* ------------------ responsive ------------------ */
+@media (max-width:480px){
+  h1{font-size:1.4rem}
+  #manual{font-size:.95rem}
+}

@@ -107,7 +107,11 @@
       e.preventDefault(); deferredPrompt=e;
       const btn=document.createElement('button');
       btn.textContent='📱 Installer l’app';
-      btn.style.cssText='position:fixed;top:10px;right:10px;padding:.5rem;background:#0d9488;color:#fff;border:none;border-radius:4px;cursor:pointer';
+      btn.style.cssText = `
+        position:fixed;bottom:64px;right:10px;       /* juste au-dessus de la nav */
+        padding:.5rem;background:#0a2540;color:#fff;
+        border:none;border-radius:4px;cursor:pointer;z-index:90`;
+
       document.body.appendChild(btn);
       btn.onclick=()=>{
         deferredPrompt.prompt();

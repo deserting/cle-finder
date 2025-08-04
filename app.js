@@ -5,7 +5,8 @@
 /* === 0. Version & changelog ======================== */
 const VERSION  = 'cle-finder-v1';          // ↔ même chaîne que dans sw.js
 const CHANGELOG = [
-  {v:'v1',   date:'2025-08-04', notes:'♦ BDD officielle ♦ UI pro ♦ Panneau version'},
+  {v:'v1.1',   date:'2025-08-04', notes:'♦ Reskin logo ♦ UI responsive'},
+  {v:'v1',   date:'2025-08-04', notes:'◌ BDD officielle ♦ UI pro ♦ Panneau version'},
   {v:'v0.9', date:'2025-07-30', notes:'◌ Première release publique'}
 ];
 

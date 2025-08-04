@@ -1,5 +1,8 @@
 // Version du cache - incrémentez pour forcer la mise à jour
-const CACHE_VERSION = 'cle-finder-v1';
+const CACHE_VERSION = 'cle-finder-v1.1'; // ↔ même chaîne que dans app.js
+// Note: La version doit correspondre à celle définie dans app.js et sw.js
+//       pour assurer la cohérence entre l'application et le service worker.
+
 //v1 : Mise à jour de la BDD complètes des couples adresse/clé
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;

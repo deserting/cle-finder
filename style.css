@@ -46,11 +46,15 @@ h1::before{content:url("icons/192.png");width:32px;height:32px}
 #nav button.inactive{color:#9aa1a9}
 #nav button.active{background:var(--gold);color:var(--charcoal)}
 
-/* liste “À réimprimer” ------------------------------- */
-#list{padding:1rem;display:grid;gap:.9rem}
-.card{background:var(--iron);border-radius:var(--radius);padding:.9rem;display:flex;justify-content:space-between;align-items:center}
-.card button{border:none;background:var(--rose);color:var(--snow);padding:.4rem .65rem;border-radius:var(--radius);cursor:pointer}
-.card small{display:block;color:#cbd0d6;font-size:.82rem}
+/* --- Liste “À réimprimer” --- */
+#list{
+  max-width:640px;
+  margin:0 auto;
+  padding:1rem 1rem 6rem;   /* 6rem = hauteur nav fixe */
+  display:none;             /* masquée par défaut */
+  display:grid;             /* sera actif en JS */
+  gap:.9rem;
+}
 
 /* panneau latéral info ------------------------------- */
 #about{

@@ -33,15 +33,18 @@ document.body.appendChild(LIST);
 /* === 4. nav actif / inactif ======================= */
 TAB_S.classList.add('active');  // état par défaut
 
-const switchTab = scanActive => {
-  LIST.style.display = scanActive ? 'none' : 'block';
-  CAM .style.display = scanActive ? 'block' : 'none';
+const MAIN = document.querySelector('main');   // 👈 nouvelle référence
+
+function switchTab (scanActive){
+  MAIN.style.display  = scanActive ? 'block' : 'none';
+  LIST.style.display  = scanActive ? 'none'  : 'grid';   // on force grid
+  CAM .style.display  = scanActive ? 'block' : 'none';
 
   TAB_S.classList.toggle('active',  scanActive);
   TAB_S.classList.toggle('inactive',!scanActive);
   TAB_T.classList.toggle('active', !scanActive);
   TAB_T.classList.toggle('inactive',scanActive);
-};
+}
 
 TAB_S.onclick = () => switchTab(true);
 TAB_T.onclick = () => switchTab(false);
@@ -145,6 +148,8 @@ db.collection('adresses').orderBy('firstScanned')
       LIST.appendChild(card);
     });
   });
+
+  LIST.style.display = 'none';
 
 /* === 9. Panneau Info / M-à-J ===================== */
 const infoBtn = $('info-btn'),

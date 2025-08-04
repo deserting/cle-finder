@@ -1,5 +1,5 @@
 // Version du cache - incrémentez pour forcer la mise à jour
-const CACHE_VERSION = 'cle-finder-v1.2'; // ↔ même chaîne que dans app.js
+const CACHE_VERSION = 'cle-en-main-v1.2'; // ↔ même chaîne que dans app.js
 // Note: La version doit correspondre à celle définie dans app.js et sw.js
 //       pour assurer la cohérence entre l'application et le service worker.
 
@@ -55,7 +55,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter(cacheName => cacheName.startsWith('cle-finder-') && cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE)
+          .filter(cacheName => cacheName.startsWith('cle-en-main-') && cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE)
           .map(cacheName => {
             console.log('SW: Suppression ancien cache:', cacheName);
             return caches.delete(cacheName);
@@ -120,7 +120,7 @@ self.addEventListener('fetch', (event) => {
             `<!DOCTYPE html>
             <html>
             <head>
-              <title>Hors ligne - Clé-Finder</title>
+              <title>Hors ligne - Clé en main</title>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width,initial-scale=1">
             </head>

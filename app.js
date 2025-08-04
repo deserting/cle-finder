@@ -1,11 +1,11 @@
 /******************************************************
- *  Clé-Finder – app.js  (Firebase, Firestore, SW)
+ *  Clé en main– app.js  (Firebase, Firestore, SW)
  ******************************************************/
 
 /* === 0. Version & changelog ======================= */
-const VERSION  = 'cle-finder-v1';      // ↔ même que CACHE_VERSION dans sw.js
+const VERSION  = 'cle-en-main-v1.2';      // ↔ même que CACHE_VERSION dans sw.js
 const CHANGELOG = [
-  {v:'v1.2', date:'2025-08-04', notes:'♦ Nouveau logo pixel ♦ Refonte UI'},
+  {v:'v1.2', date:'2025-08-04', notes:'♦ Corrections des bugs JS ♦ Responsive mobile'},
   {v:'v1.1', date:'2025-08-04', notes:'◌ Nouveau logo pixel ◌ Refonte UI'},
   {v:'v1.0',   date:'2025-08-04', notes:'◌ BDD officielle ◌ Panneau version'},
   {v:'v0.9', date:'2025-07-30', notes:'◌ Première release publique'}
@@ -179,4 +179,4 @@ $('update').onclick = async () => {
     : alert('Aucune mise à jour disponible 👍');
 };
 
-console.log('🟢 Clé-Finder prêt');
+console.log('🟢 Clé en main prêt');

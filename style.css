@@ -15,72 +15,130 @@
   line-height:1.4;
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Layout général ---------- */
 body{min-height:100vh;display:flex;flex-direction:column}
 
-/* tête ------------------------------------------------- */
-main{flex:1;max-width:640px;margin:0 auto;padding:1.5rem 1rem 6rem} /* 6 rem = marge pour la nav fixe */
-h1{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;font-size:1.6rem;font-weight:700}
-h1::before{content:url("icons/192.png");width:32px;height:32px}
+/* ---------- Écran principal (onglet Scanner) ---------- */
+main{
+  flex:1;
+  display:flex;                       /* centre le bloc entier */
+  flex-direction:column;
+  justify-content:center;             /* vertical */
+  align-items:center;                  /* horizontal */
+  gap:1.4rem;
+  max-width:640px;
+  margin:0 auto;
+  padding:2rem 1rem 6rem;             /* 6rem pour ne pas passer sous la nav */
+}
 
-/* zone saisie + bouton scan --------------------------- */
-.actions{display:flex;gap:.6rem;margin-bottom:1rem}
-#manual{flex:1;padding:.7rem;border:2px solid var(--iron);border-radius:var(--radius);background:var(--iron);color:var(--snow)}
+/* Titre (logo optionnel en ::before) */
+h1{
+  font-size:1.7rem;font-weight:700;
+  display:flex;align-items:center;gap:.5rem;
+}
+
+
+/* -------- bloc actions (input + bouton scan) -------- */
+.actions{width:100%;display:flex;gap:.6rem}
+#manual{
+  flex:1;min-width:0;
+  padding:.75rem;border:2px solid var(--iron);
+  border-radius:var(--radius);
+  background:var(--iron);color:var(--snow)
+}
 #manual::placeholder{color:#9aa1a9}
-#scan{padding:.7rem 1.2rem;border:none;border-radius:var(--radius);background:var(--gold);color:var(--charcoal);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.4rem}
+#scan{
+  padding:.75rem 1.2rem;border:none;border-radius:var(--radius);
+  background:var(--gold);color:var(--charcoal);font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:.4rem
+}
 #scan:hover{background:var(--gold-dark)}
 #scan:focus-visible{outline:2px solid var(--snow)}
 
-/* résultat ------------------------------------------- */
-#result{padding:1.1rem;border-radius:var(--radius);background:var(--iron);text-align:center;transition:.2s}
+/* -------- résultat -------- */
+#result{
+  width:100%;text-align:center;
+  padding:1.1rem;border-radius:var(--radius);
+  background:var(--iron);transition:.25s
+}
 .success{background:rgba(0,195,122,.15);color:var(--mint)}
 .error  {background:rgba(248,113,113,.15);color:var(--rose)}
 
-/* caméra --------------------------------------------- */
-#camera-container{margin-top:1rem}
-#camera-view{width:100%;aspect-ratio:4/3;border:2px dashed var(--gold-dark);border-radius:var(--radius)}
+/* -------- caméra -------- */
+#camera-container{width:100%}
+#camera-view{
+  width:100%;aspect-ratio:4/3;
+  border:2px dashed var(--gold-dark);border-radius:var(--radius)
+}
 
-/* nav fixe en bas ------------------------------------ */
-#nav{position:fixed;bottom:0;left:0;right:0;display:flex;height:56px;background:var(--iron);backdrop-filter:blur(6px);z-index:20}
-#nav button{flex:1;border:none;background:none;color:var(--snow);font-size:1.05rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+/* ---------- Nav fixe ---------- */
+#nav{
+  position:fixed;bottom:0;left:0;right:0;
+  display:flex;height:56px;
+  background:var(--iron);backdrop-filter:blur(6px);z-index:20
+}
+#nav button{
+  flex:1;border:none;background:none;color:var(--snow);
+  font-size:1.05rem;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer
+}
 #nav button.inactive{color:#9aa1a9}
 #nav button.active{background:var(--gold);color:var(--charcoal)}
 
-/* --- Liste “À réimprimer” --- */
+/* ---------- Liste “À réimprimer” (plein écran) ---------- */
 #list{
-  max-width:640px;
-  margin:0 auto;
-  padding:1rem 1rem 6rem;   /* 6rem = hauteur nav fixe */
-  display:none;             /* masquée par défaut */
-  display:grid;             /* sera actif en JS */
-  gap:.9rem;
+  position:fixed;top:0;left:0;right:0;bottom:56px; /* au-dessus de la nav */
+  overflow-y:auto;
+  background:var(--charcoal);
+  padding:1rem 1rem 6rem;
+  display:grid;gap:1rem;          /* affiché en JS lorsqu’on ouvre l’onglet */
+  max-width:640px;margin:0 auto;
 }
 
-/* panneau latéral info ------------------------------- */
+/* Cartes de la liste */
+.card{
+  background:var(--iron);border-radius:var(--radius);
+  padding:.9rem;display:flex;justify-content:space-between;align-items:center
+}
+.card small{display:block;color:#cbd0d6;font-size:.82rem}
+.card button{
+  border:none;background:var(--rose);color:var(--snow);
+  padding:.35rem .6rem;border-radius:var(--radius);cursor:pointer
+}
+
+/* ---------- Panneau latéral “À propos” ---------- */
 #about{
   position:fixed;top:0;right:0;bottom:0;
   width:80%;max-width:360px;padding:1.4rem 1.2rem;overflow-y:auto;
   background:var(--charcoal);box-shadow:-6px 0 12px rgba(0,0,0,.4);
-  transform:translateX(100%);transition:transform .3s ease;z-index:30;
+  transform:translateX(100%);transition:transform .3s ease;z-index:30
 }
 #about.open{transform:translateX(0)}
 #about h2{margin-bottom:1rem;color:var(--gold)}
 #history strong{color:var(--gold)}
-#update{margin-top:1.2rem;background:var(--gold);color:var(--charcoal);padding:.6rem 1rem;border:none;border-radius:var(--radius);cursor:pointer}
+#update{
+  margin-top:1.2rem;background:var(--gold);color:var(--charcoal);
+  padding:.6rem 1rem;border:none;border-radius:var(--radius);cursor:pointer
+}
 
-/* bouton info (en haut à gauche) --------------------- */
+/* ---------- Bouton info ---------- */
 #info-btn{
-  position:fixed;top:1rem;left:1rem;z-index:40;
+  position:fixed;top:1rem;right:1rem;z-index:40;
   width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);
-  background:none;color:var(--gold);font-size:1.4rem;cursor:pointer;
+  background:none;color:var(--gold);font-size:1.4rem;cursor:pointer
 }
 #info-btn:focus-visible{outline:2px solid var(--snow)}
 
-/* bouton install & bannière maj ---------------------- */
-.install-btn,.update-banner{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);border:none;padding:.8rem 1.4rem;border-radius:var(--radius);background:var(--gold);color:var(--charcoal);font-weight:600;z-index:50}
+/* ---------- Bannières (install / MAJ) ---------- */
+.install-btn,.update-banner{
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  border:none;padding:.8rem 1.4rem;border-radius:var(--radius);
+  background:var(--gold);color:var(--charcoal);font-weight:600;z-index:50
+}
 
-/* ------------------ responsive ------------------ */
+/* ---------- Responsive ---------- */
 @media (max-width:480px){
+  main{gap:1rem;padding:1.5rem 1rem 6rem}
   h1{font-size:1.4rem}
   #manual{font-size:.95rem}
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Clé-Finder</title>
+  <title>Clé en main</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#222629">
@@ -19,21 +19,21 @@
 
 <body>
   <!-- Contenu central -->
-  <main>
-    <h1>Clé-Finder</h1>
+<main class="centered">
+  <h1>Clé en main</h1>            <!-- logo + titre -->
+  <div class="actions">
+    <input id="manual" placeholder="Tapez l'adresse…" autocomplete="off">
+    <button id="scan">📷 Scanner</button>
+  </div>
 
-    <div class="actions">
-      <input id="manual" placeholder="Tapez l'adresse…" autocomplete="off">
-      <button id="scan">📷 Scanner</button>
-    </div>
+  <div id="result">Saisissez ou scannez une adresse</div>
 
-    <div id="result">Saisissez ou scannez une adresse</div>
+  <div id="camera-container" style="display:none">
+    <div id="camera-view"></div>
+    <button id="stop-scan" class="del">Arrêter</button>
+  </div>
+</main>
 
-    <div id="camera-container" style="display:none">
-      <div id="camera-view"></div>
-      <button id="stop-scan" class="del">Arrêter</button>
-    </div>
-  </main>
 
   <!-- barre de navigation -->
   <nav id="nav">
@@ -47,15 +47,41 @@
   <aside id="about">
     <h2>À propos</h2>
     <div id="ver"></div>
+    <p>BDD à jour au 04.08.2025</p>
+    <br>
     <hr>
+    <br>
     <div id="history"></div>
-
+    <br>
     <button id="update">🔄 Rechercher une mise à jour</button>
   </aside>
+
+<!-- 1) SDK Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth-compat.js"></script>
+
+<!-- 2) TON INIT Firebase (⚠️ avant app.js !) -->
+<script>
+  firebase.initializeApp({
+    apiKey:            "AIzaSyD_Q-Bx8OHFhQa1X0KWlRNvzOP2c3fgG84",
+    authDomain:        "clesfinder.firebaseapp.com",
+    projectId:         "clesfinder",
+    storageBucket:     "clesfinder.appspot.com",
+    messagingSenderId: "447281549352",
+    appId:             "1:447281549352:web:abc433220d9a74885d651d"
+  });
+
+  firebase.auth().signInAnonymously();          // optionnel si règles ouvertes
+  firebase.firestore().enablePersistence().catch(()=>{});
+  window.db = firebase.firestore();             // 👈 dispo partout, y compris dans app.js
+</script>
+
 
   <!-- Quagga & logique appli -->
   <script src="https://unpkg.com/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
   <script src="./app.js"></script>
+
 
   <!-- Service Worker + bouton d’installation PWA -->
   <script>

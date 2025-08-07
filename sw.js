@@ -1,5 +1,5 @@
 // Version du cache - incrémentez pour forcer la mise à jour
-const CACHE_VERSION = 'cle-en-main-v1.2'; // ↔ même chaîne que dans app.js
+const CACHE_VERSION = 'cle-en-main-v1.1'; // ↔ même chaîne que dans app.js
 // Note: La version doit correspondre à celle définie dans app.js et sw.js
 //       pour assurer la cohérence entre l'application et le service worker.
 
@@ -126,7 +126,7 @@ self.addEventListener('fetch', (event) => {
             </head>
             <body style="font-family:sans-serif;text-align:center;padding:2rem;">
               <h1>📵 Hors ligne</h1>
-              <p>Vous êtes actuellement hors ligne.</p>
+              <p>Tu es actuellement hors ligne.</p>
               <p>L'application continuera à fonctionner avec les données en cache.</p>
               <button onclick="location.reload()">Réessayer</button>
             </body>

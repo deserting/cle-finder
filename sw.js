@@ -1,5 +1,5 @@
 // Version du cache - incrémentez pour forcer la mise à jour
-const CACHE_VERSION = 'cle-en-main-v1.1'; // ↔ même chaîne que dans app.js
+const CACHE_VERSION = 'cle-en-main-v1.2'; // ↔ même chaîne que dans app.js
 // Note: La version doit correspondre à celle définie dans app.js et sw.js
 //       pour assurer la cohérence entre l'application et le service worker.
 
@@ -12,15 +12,14 @@ const STATIC_ASSETS = [
   './',
   './index.html',
   './app.js',
+  './quagga.min.js',
   './manifest.json',
   './db.json',
   './icons/192.png',
   './icons/512.png'
 ];
 
-const EXTERNAL_ASSETS = [
-  'https://unpkg.com/@ericblade/quagga2@1.2.6/dist/quagga.min.js'
-];
+const EXTERNAL_ASSETS = [];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {

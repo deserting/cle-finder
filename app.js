@@ -5,8 +5,8 @@
 /* === 0. Version & changelog ======================= */
 const VERSION  = 'cle-en-main-v1.2';          // ↔ même que CACHE_VERSION
 const CHANGELOG = [
-  {v:'v1.2', date:'2025-08-15', notes:'Bundled Quagga library for offline use'},
-  {v:'v1.1', date:'2025-08-07', notes:'♦ App 100% responsive ♦ Tweaks légéers de design'},
+  {v:'v1.2', date:'2025-08-15', notes:'♦ Quagga bundlé pour usage offline & sécurité ♦ Gestion des erreurs sur le chargement en retard de la BDD'},
+  {v:'v1.1', date:'2025-08-07', notes:'◌ App 100% responsive ◌ Tweaks légéers de design'},
   {v:'v1.0', date:'2025-07-30', notes:'◌ A survécu au betatest ◌ Intégration de la BDD officielle & offline'}
 ];
 
@@ -182,3 +182,4 @@ $('update').onclick =async ()=>{
 };
 
 console.log('🟢 Clé-en-main prêt');
+

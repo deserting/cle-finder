@@ -11,7 +11,15 @@ const CHANGELOG = [
 
 /* === 1. charger db.json =========================== */
 let DB={};
-fetch('./db.json').then(r=>r.json()).then(j=>DB=j);
+const dbReady=(async()=>{
+  try{
+    const r=await fetch('./db.json');
+    DB=await r.json();
+  }catch(err){
+    console.error('Erreur chargement DB',err);
+    throw err;
+  }
+})();
 
 /* === 2. DOM helpers =============================== */
 const $     = id=>document.getElementById(id);
@@ -23,6 +31,17 @@ const RES   = $('result'),
       STOP  = $('stop-scan'),
       TAB_S = $('tab-scan'),
       TAB_T = $('tab-todo');
+
+(async()=>{
+  IN.disabled=BTN.disabled=true;
+  try{
+    await dbReady;
+    IN.disabled=BTN.disabled=false;
+  }catch{
+    RES.textContent='❌ Base de données indisponible';
+    RES.className='error';
+  }
+})();
 
 /* === 3. liste plein écran ========================= */
 const LIST=document.createElement('div');
@@ -58,6 +77,7 @@ async function save(addr,key){
 
 /* === 6. lookup =================================== */
 async function lookup(addr){
+  await dbReady;
   addr=addr.toUpperCase().trim();
   if(!addr) return RES.textContent='Adresse vide';
   const key=DB[addr]||'';

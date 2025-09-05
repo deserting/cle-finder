@@ -1,179 +1,525 @@
-/* ---------- Reset & variables ---------- */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --charcoal:#222629;
-  --iron:#393e46;
-  --gold:#f6c244;
-  --gold-dark:#d79d1e;
-  --snow:#f7f9fa;
-  --mint:#00c37a;
-  --rose:#f87171;
-  --radius:8px;
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  color:var(--snow);
-  background:var(--charcoal);
-  line-height:1.4;
+/* ---------- DESIGN SYSTEM & RESET ---------- */
+:root {
+  --background: #1a1d21;
+  --surface-1: #2c3138;
+  --surface-2: #3a4049;
+  --primary: #ffc700;
+  --primary-dark: #e0ae00;
+  --success: #00c853;
+  --success-bg: rgba(0, 200, 83, 0.1);
+  --error: #ff5252;
+  --error-bg: rgba(255, 82, 82, 0.1);
+  --text-primary: #f0f2f5;
+  --text-secondary: #a8b3c1;
+  --text-on-primary: #1a1d21;
+  --border-color: #4a525e;
+  --radius: 12px;
+  --shadow-sm: 0 4px 6px rgba(0,0,0,0.15);
+  --shadow-md: 0 10px 15px rgba(0,0,0,0.2);
+  --transition-fast: 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-medium: 0.3s ease-in-out;
 }
 
-/* ---------- Layout général ---------- */
-body{min-height:100vh;display:flex;flex-direction:column}
-
-/* ---------- Écran principal (onglet Scanner) ---------- */
-main{
-  flex:1;
-  display:flex;                       /* centre le bloc entier */
-  flex-direction:column;
-  justify-content:center;             /* vertical */
-  align-items:center;                  /* horizontal */
-  gap:1.4rem;
-  max-width:640px;
-  margin:0 auto;
-  padding:2rem 1rem 6rem;             /* 6rem pour ne pas passer sous la nav */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Titre (logo optionnel en ::before) */
-h1{
-  font-size:1.7rem;font-weight:700;
-  display:flex;align-items:center;gap:.5rem;
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  background-color: var(--background);
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+/* ---------- LAYOUT PRINCIPAL ---------- */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height */
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: var(--background);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  color: var(--primary);
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+main {
+  flex: 1;
+  padding: 0 1.5rem 6rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- VUES (SCANNER / LISTE) ---------- */
+.view {
+  display: none;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.view.active {
+  display: flex;
+}
+
+/* ---------- COMPOSANTS DE LA VUE SCANNER ---------- */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+#manual {
+  flex: 1;
+  min-width: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+#manual::placeholder {
+  color: var(--text-secondary);
+}
+#manual:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 199, 0, 0.2);
+}
+
+#scan {
+  padding: 0.8rem 1.25rem;
+  border: none;
+  border-radius: var(--radius);
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+#scan:hover {
+  background-color: var(--primary-dark);
+}
+#scan .stop-text { display: none; }
+
+/* Styles quand le scan est actif */
+body.scanning #scan {
+  background-color: var(--error);
+  color: var(--text-primary);
+}
+body.scanning #scan .scan-text { display: none; }
+body.scanning #scan .stop-text { display: block; }
+body.scanning #scan:hover { background-color: #d32f2f; }
+
+#result {
+  width: 100%;
+  text-align: center;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background-color: var(--surface-1);
+  transition: all var(--transition-medium);
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+#result.success {
+  background-color: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+#result.error {
+  background-color: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+#camera-container {
+  display: none;
+  width: 100%;
+}
+body.scanning #camera-container {
+  display: block;
+}
+
+#camera-view {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  background-color: #000;
+  box-shadow: var(--shadow-sm);
+}
+
+#camera-view video, #camera-view canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block;
+}
+
+.scan-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+}
+
+.scan-line {
+    position: absolute;
+    left: 5%;
+    right: 5%;
+    top: 0;
+    height: 3px;
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+    animation: scan 2s infinite cubic-bezier(0.5, 0, 0.5, 1);
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  50% { top: calc(100% - 3px); }
+  100% { top: 0; }
+}
+
+#stop-scan { display: none; } /* On utilise le bouton principal */
+
+
+/* ---------- VUE DE LA LISTE "À RÉIMPRIMER" ---------- */
+#list-view {
+  gap: 0.75rem;
+}
+
+.card {
+  background-color: var(--surface-1);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-info .addr {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+.card-info .details {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+.card-info .key {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-actions .scan-count {
+  background-color: var(--surface-2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.card-actions .del-btn {
+  border: none;
+  background-color: var(--error-bg);
+  color: var(--error);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+}
+.del-btn:hover {
+  background-color: var(--error);
+  color: var(--text-primary);
 }
 
 
-/* -------- bloc actions (input + bouton scan) -------- */
-.actions{width:100%;display:flex;gap:.6rem}
-#manual{
-  flex:1;min-width:0;
-  padding:.75rem;border:2px solid var(--iron);
-  border-radius:var(--radius);
-  background:var(--iron);color:var(--snow)
-}
-#manual::placeholder{color:#9aa1a9}
-#scan{
-  padding:.75rem 1.2rem;border:none;border-radius:var(--radius);
-  background:var(--gold);color:var(--charcoal);font-weight:600;
-  cursor:pointer;display:flex;align-items:center;gap:.4rem
-}
-#scan:hover{background:var(--gold-dark)}
-#scan:focus-visible{outline:2px solid var(--snow)}
-
-/* -------- résultat -------- */
-#result{
-  width:100%;text-align:center;
-  padding:1.1rem;border-radius:var(--radius);
-  background:var(--iron);transition:.25s
-}
-.success{background:rgba(0,195,122,.15);color:var(--mint)}
-.error  {background:rgba(248,113,113,.15);color:var(--rose)}
-
-/* -------- caméra -------- */
-#camera-container{
-  display:none;                    /* ouvert en JS au scan */
-  display:flex;flex-direction:column;
-  align-items:center;              /* centre HORIZONTAL les enfants */
-  gap:.8rem;                       /* espace vidéo ↔ bouton */
-  width:100%;
-}
-#camera-view{
-  width:100%;aspect-ratio:4/3;
-  border:2px dashed var(--gold-dark);border-radius:var(--radius)
+/* ---------- NAVIGATION ---------- */
+#nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  height: calc(56px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: rgba(44, 49, 56, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-color);
+  z-index: 20;
 }
 
-/* ---------- Nav fixe ---------- */
-#nav{
-  position:fixed;bottom:0;left:0;right:0;
-  display:flex;height:56px;
-  background:var(--iron);backdrop-filter:blur(6px);z-index:20
+#nav button {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  font-weight: 500;
+  font-size: 0.75rem;
 }
-#nav button{
-  flex:1;border:none;background:none;color:var(--snow);
-  font-size:1.05rem;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;cursor:pointer
-}
-#nav button.inactive{color:#9aa1a9}
-#nav button.active{background:var(--gold);color:var(--charcoal)}
-
-/* ---------- Liste “À réimprimer” (plein écran) ---------- */
-#list{
-  position:fixed;top:0;left:0;right:0;bottom:56px; /* au-dessus de la nav */
-  overflow-y:auto;
-  background:var(--charcoal);
-  padding:1rem 1rem 6rem;
-  display:grid;gap:1rem;          /* affiché en JS lorsqu’on ouvre l’onglet */
-  max-width:640px;margin:0 auto;
-}
-
-/* Cartes de la liste */
-.card{
-  background:var(--iron);border-radius:var(--radius);
-  padding:.9rem;display:flex;justify-content:space-between;align-items:center
-}
-.card small{display:block;color:#cbd0d6;font-size:.82rem}
-.card button{
-  border:none;background:var(--rose);color:var(--snow);
-  padding:.35rem .6rem;border-radius:var(--radius);cursor:pointer
-}
-
-/* ---------- Panneau latéral “À propos” ---------- */
-#about{
-  position:fixed;top:0;right:0;bottom:0;
-  width:80%;max-width:360px;padding:1.4rem 1.2rem;overflow-y:auto;
-  background:var(--charcoal);box-shadow:-6px 0 12px rgba(0,0,0,.4);
-  transform:translateX(100%);transition:transform .3s ease;z-index:30
-}
-#about.open{transform:translateX(0)}
-#about h2{margin-bottom:1rem;color:var(--gold)}
-#history strong{color:var(--gold)}
-#update{
-  margin-top:1.2rem;background:var(--gold);color:var(--charcoal);
-  padding:.6rem 1rem;border:none;border-radius:var(--radius);cursor:pointer
-}
-
-/* ---------- Bouton info ---------- */
-#info-btn{
-  position:fixed;top:1rem;right:1rem;z-index:40;
-  width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);
-  background:none;color:var(--gold);font-size:1.4rem;cursor:pointer
-}
-#info-btn:focus-visible{outline:2px solid var(--snow)}
-
-/* ---------- Bannières (install / MAJ) ---------- */
-.install-btn,.update-banner{
-  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
-  border:none;padding:.8rem 1.4rem;border-radius:var(--radius);
-  background:var(--gold);color:var(--charcoal);font-weight:600;z-index:50
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width:480px){
-  main{gap:1rem;padding:1.5rem 1rem 6rem}
-  h1{font-size:1.4rem}
-  #manual{font-size:.95rem}
+#nav button.active {
+  color: var(--primary);
 }
 
 
-/* ---------- Caméra responsive ---------- */
-#camera-view{
-  width:100%;
-  max-height:60vh;           /* jamais plus haut que 60 % de l’écran */
-  aspect-ratio:4/3;
-  border:2px dashed var(--gold-dark);
-  border-radius:var(--radius);
-  overflow:hidden;           /* coupe les débordements */
+/* ---------- PANNEAU LATÉRAL "À PROPOS" ---------- */
+#about {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 85%;
+  max-width: 380px;
+  padding: 1.5rem;
+  /* padding-top: 3rem; */ /* Ajusté pour le bouton fermer */
+  overflow-y: auto;
+  background-color: var(--surface-1);
+  box-shadow: var(--shadow-md);
+  transform: translateX(100%);
+  transition: transform var(--transition-medium);
+  z-index: 100;
 }
 
-/* Quagga injecte <video> & <canvas> → on les force à remplir proprement */
-#camera-view video,
-#camera-view canvas{
-  width:100% !important;
-  height:auto !important;
-  object-fit:cover;
+.close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 0;
+  border-radius: 50%;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+.close-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-2);
 }
 
-/* Le bouton interne “Arrêter” */
-#stop-scan{                /* tu peux ajuster la couleur si besoin */
-  margin:.6rem auto 0;
-  padding:.6rem 1.4rem;
-  border:none;border-radius:var(--radius);
-  background:var(--rose);color:var(--snow);font-weight:600;
-  display:none;            /* caché par défaut, affiché en JS */
+body.about-open #about {
+  transform: translateX(0);
+}
+
+.about-content h2 {
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+  font-size: 1.75rem;
+}
+.about-content .db-date {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+.about-content hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 1.5rem 0;
+}
+.about-content h3 {
+  margin-bottom: 1rem;
+}
+#history {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+#history strong {
+  color: var(--primary);
+  display: block;
+  font-weight: 600;
+}
+#history p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+#update {
+  margin-top: 2rem;
+  width: 100%;
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color var(--transition-fast);
+}
+#update:hover {
+  background-color: var(--primary-dark);
+}
+
+#info-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 40;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#info-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-1);
+}
+
+#about-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-medium), visibility var(--transition-medium);
+  z-index: 99;
+}
+body.about-open #about-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---------- BANNIÈRES (INSTALL / MAJ) ---------- */
+.banner {
+  position: fixed;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-color);
+  padding: 0.8rem 1.4rem;
+  border-radius: var(--radius);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-weight: 600;
+  z-index: 50;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: calc(100% - 3rem);
+  max-width: 400px;
+}
+.update-banner {
+  justify-content: space-between;
+}
+.banner button {
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-fast);
+}
+.banner button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* ---------- NOTIFICATIONS ---------- */
+.notification {
+  position: fixed;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 0.8rem 1.4rem;
+  border-radius: var(--radius);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-weight: 600;
+  z-index: 150;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-medium), transform var(--transition-medium), visibility var(--transition-medium);
+}
+
+.notification.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:480px) {
+  .app-header, main { padding-left: 1rem; padding-right: 1rem; }
+  h1 { font-size: 1.25rem; }
+  #manual, #scan { font-size: 0.95rem; }
+  .banner { width: calc(100% - 2rem); }
 }
 
